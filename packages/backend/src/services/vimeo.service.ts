@@ -1,6 +1,7 @@
 import { config } from '../config.js';
 import { logger } from '../utils/logger.js';
 import { AppError } from '../errors/app-error.js';
+import type { VideoSourceService, VideoMetadata } from './video-source.js';
 
 export interface VimeoVideo {
   uri: string;
@@ -19,7 +20,7 @@ export interface VimeoTextTrack {
 
 const VIMEO_API = 'https://api.vimeo.com';
 
-export class VimeoService {
+export class VimeoService implements VideoSourceService {
   private get token(): string {
     if (!config.VIMEO_ACCESS_TOKEN) {
       throw AppError.internal('VIMEO_ACCESS_TOKEN is not configured');
@@ -76,5 +77,29 @@ export class VimeoService {
       throw AppError.internal(`Failed to download VTT: ${res.status}`);
     }
     return res.text();
+  }
+
+  /** VideoSourceService implementation: fetch metadata for a Vimeo video. */
+  async getMetadata(sourceId: string): Promise<VideoMetadata> {
+    const video = await this.getVideo(sourceId);
+    const thumbnail =
+      video.pictures?.sizes?.length > 0
+        ? video.pictures.sizes[video.pictures.sizes.length - 1].link
+        : null;
+    return {
+      title: video.name,
+      description: video.description,
+      duration_seconds: video.duration,
+      thumbnail_url: thumbnail,
+    };
+  }
+
+  /** VideoSourceService implementation: fetch VTT transcript for a Vimeo video. */
+  async getTranscriptVtt(sourceId: string): Promise<string> {
+    const tracks = await this.getTextTracks(sourceId);
+    if (tracks.length === 0) {
+      throw AppError.internal(`No text tracks found for Vimeo video ${sourceId}`);
+    }
+    return this.downloadVtt(tracks[0].link);
   }
 }

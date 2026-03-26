@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import type { Pool } from 'pg';
 import { z } from 'zod';
+import type { VideoSourceType } from '@vimeo-brain/shared';
 import { VideoRepository } from '../repositories/video.repository.js';
 import { IngestService } from '../services/ingest.service.js';
 import { validate } from '../middleware/validate.js';
@@ -8,7 +9,8 @@ import { AppError } from '../errors/app-error.js';
 import { logger } from '../utils/logger.js';
 
 const createVideoSchema = z.object({
-  vimeo_id: z.string().min(1),
+  source_type: z.enum(['vimeo', 'youtube']).default('vimeo'),
+  source_id: z.string().min(1),
   title: z.string().optional().default(''),
 });
 
@@ -41,10 +43,14 @@ export function createVideoRouter(pool: Pool): Router {
   // POST /api/videos
   router.post('/api/videos', validate(createVideoSchema), async (req, res, next) => {
     try {
-      const { vimeo_id, title } = req.body as { vimeo_id: string; title: string };
-      const existing = await videoRepo.findByVimeoId(vimeo_id);
+      const { source_type, source_id, title } = req.body as {
+        source_type: VideoSourceType;
+        source_id: string;
+        title: string;
+      };
+      const existing = await videoRepo.findBySourceId(source_type, source_id);
       if (existing) throw AppError.badRequest('Video already registered');
-      const video = await videoRepo.create(vimeo_id, title);
+      const video = await videoRepo.create(source_type, source_id, title);
       res.status(201).json({ success: true, data: video });
     } catch (err) {
       next(err);

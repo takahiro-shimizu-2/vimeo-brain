@@ -8,6 +8,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(3001),
   DATABASE_URL: z.string().default('postgres://vimeo:vimeo@localhost:5432/vimeo_brain'),
   VIMEO_ACCESS_TOKEN: z.string().optional(),
+  YOUTUBE_API_KEY: z.string().optional(),
   EMBEDDING_PROVIDER: z.enum(['openai', 'anthropic']).default('openai'),
   LLM_PROVIDER: z.enum(['anthropic', 'openai']).default('anthropic'),
   OPENAI_API_KEY: z.string().optional(),

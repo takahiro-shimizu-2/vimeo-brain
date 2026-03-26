@@ -1,8 +1,11 @@
 import { api } from './client';
 
+export type VideoSourceType = 'vimeo' | 'youtube';
+
 export interface Video {
   id: string;
-  vimeo_id: string;
+  source_type: VideoSourceType;
+  source_id: string;
   title: string;
   description: string | null;
   duration_seconds: number | null;
@@ -19,7 +22,8 @@ export interface IngestStatus {
 export const videosApi = {
   list: () => api.get<Video[]>('/videos'),
   get: (id: string) => api.get<Video>(`/videos/${id}`),
-  create: (vimeoId: string) => api.post<Video>('/videos', { vimeo_id: vimeoId }),
+  create: (sourceType: VideoSourceType, sourceId: string) =>
+    api.post<Video>('/videos', { source_type: sourceType, source_id: sourceId }),
   remove: (id: string) => api.del(`/videos/${id}`),
   ingest: (id: string) => api.post<void>(`/videos/${id}/ingest`, {}),
   ingestStatus: (id: string) => api.get<IngestStatus>(`/videos/${id}/ingest/status`),

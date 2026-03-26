@@ -1,8 +1,11 @@
 export type IngestStatus = 'pending' | 'processing' | 'completed' | 'failed';
 
+export type VideoSourceType = 'vimeo' | 'youtube';
+
 export interface Video {
   id: string;
-  vimeo_id: string;
+  source_type: VideoSourceType;
+  source_id: string;
   title: string;
   description: string | null;
   duration_seconds: number | null;

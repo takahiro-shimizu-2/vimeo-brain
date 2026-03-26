@@ -1,5 +1,5 @@
 import type { Pool } from 'pg';
-import type { Video, IngestStatus } from '@vimeo-brain/shared';
+import type { Video, IngestStatus, VideoSourceType } from '@vimeo-brain/shared';
 
 export class VideoRepository {
   constructor(private readonly pool: Pool) {}
@@ -19,18 +19,18 @@ export class VideoRepository {
     return rows[0] || null;
   }
 
-  async findByVimeoId(vimeoId: string): Promise<Video | null> {
+  async findBySourceId(sourceType: VideoSourceType, sourceId: string): Promise<Video | null> {
     const { rows } = await this.pool.query(
-      'SELECT * FROM videos WHERE vimeo_id = $1',
-      [vimeoId]
+      'SELECT * FROM videos WHERE source_type = $1 AND source_id = $2',
+      [sourceType, sourceId]
     );
     return rows[0] || null;
   }
 
-  async create(vimeoId: string, title: string = ''): Promise<Video> {
+  async create(sourceType: VideoSourceType, sourceId: string, title: string = ''): Promise<Video> {
     const { rows } = await this.pool.query(
-      'INSERT INTO videos (vimeo_id, title) VALUES ($1, $2) RETURNING *',
-      [vimeoId, title]
+      'INSERT INTO videos (source_type, source_id, title) VALUES ($1, $2, $3) RETURNING *',
+      [sourceType, sourceId, title]
     );
     return rows[0];
   }

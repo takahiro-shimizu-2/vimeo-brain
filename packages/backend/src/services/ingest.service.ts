@@ -1,20 +1,25 @@
 import type { Pool } from 'pg';
-import type { IngestResult, IngestStatus } from '@vimeo-brain/shared';
+import type { IngestResult, IngestStatus, VideoSourceType } from '@vimeo-brain/shared';
 import { runPipeline, type PipelineResult } from '@vimeo-brain/knowledge-engine';
+import type { VideoSourceService } from './video-source.js';
 import { VimeoService } from './vimeo.service.js';
+import { YouTubeService } from './youtube.service.js';
 import { EmbeddingService } from './embedding.service.js';
 import { LlmService } from './llm.service.js';
 import { VideoRepository } from '../repositories/video.repository.js';
 import { logger } from '../utils/logger.js';
 
 export class IngestService {
-  private vimeoService: VimeoService;
+  private sources: Map<VideoSourceType, VideoSourceService>;
   private embeddingService: EmbeddingService;
   private llmService: LlmService;
   private videoRepo: VideoRepository;
 
   constructor(private pool: Pool) {
-    this.vimeoService = new VimeoService();
+    this.sources = new Map<VideoSourceType, VideoSourceService>([
+      ['vimeo', new VimeoService()],
+      ['youtube', new YouTubeService()],
+    ]);
     this.embeddingService = new EmbeddingService();
     this.llmService = new LlmService();
     this.videoRepo = new VideoRepository(pool);
@@ -36,27 +41,27 @@ export class IngestService {
     await this.updateIngestLog(videoId, 'processing', 0, null, null);
 
     try {
-      const tracks = await this.vimeoService.getTextTracks(video.vimeo_id);
-      if (tracks.length === 0) {
-        throw new Error('No text tracks found for this video');
+      const source = this.sources.get(video.source_type);
+      if (!source) {
+        throw new Error(`Unsupported video source type: ${video.source_type}`);
       }
 
-      const vttContent = await this.vimeoService.downloadVtt(tracks[0].link);
+      const vttContent = await source.getTranscriptVtt(video.source_id);
 
       let title = video.title;
       let description = video.description;
       if (!title) {
-        const vimeoVideo = await this.vimeoService.getVideo(video.vimeo_id);
-        title = vimeoVideo.name;
-        description = vimeoVideo.description;
+        const metadata = await source.getMetadata(video.source_id);
+        title = metadata.title;
+        description = metadata.description;
         await this.pool.query(
-          'UPDATE videos SET title = $1, description = $2, duration_seconds = $3 WHERE id = $4',
-          [title, description, vimeoVideo.duration, videoId]
+          'UPDATE videos SET title = $1, description = $2, duration_seconds = $3, thumbnail_url = $4 WHERE id = $5',
+          [title, description, metadata.duration_seconds, metadata.thumbnail_url, videoId]
         );
       }
 
       const result: PipelineResult = await runPipeline(
-        video.vimeo_id,
+        video.source_id,
         title,
         description,
         vttContent,
