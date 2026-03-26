@@ -3,15 +3,38 @@ import { logger } from '../utils/logger.js';
 import { AppError } from '../errors/app-error.js';
 import type { VideoSourceService, VideoMetadata } from './video-source.js';
 
-/** Lazily import the ESM-only youtube-transcript package. */
-async function getYoutubeTranscript() {
+interface TranscriptItem {
+  text: string;
+  offset: number;
+  duration: number;
+}
+
+interface YoutubeTranscriptApi {
+  fetchTranscript(videoId: string): Promise<TranscriptItem[]>;
+}
+
+/**
+ * Load youtube-transcript's CJS bundle.
+ * The package has "type":"module" in package.json, which makes Node.js refuse
+ * to require() its .js files. We work around this by reading and eval'ing the
+ * CJS bundle ourselves, providing a mock `exports` and `module` context.
+ */
+function getYoutubeTranscript(): YoutubeTranscriptApi {
+  const path = require('path') as typeof import('path');
+  const fs = require('fs') as typeof import('fs');
+  const bundlePath = path.join(
+    path.dirname(require.resolve('youtube-transcript/package.json')),
+    'dist',
+    'youtube-transcript.common.js'
+  );
+  const code = fs.readFileSync(bundlePath, 'utf8');
+  const moduleExports: Record<string, unknown> = {};
+  const moduleObj = { exports: moduleExports };
   // eslint-disable-next-line @typescript-eslint/no-implied-eval
-  const mod = await (new Function('return import("youtube-transcript")')() as Promise<{
-    YoutubeTranscript: {
-      fetchTranscript(videoId: string): Promise<Array<{ text: string; offset: number; duration: number }>>;
-    };
-  }>);
-  return mod.YoutubeTranscript;
+  const fn = new Function('exports', 'module', 'require', '__filename', '__dirname', code);
+  fn(moduleExports, moduleObj, require, bundlePath, path.dirname(bundlePath));
+  const result = moduleObj.exports as { YoutubeTranscript: YoutubeTranscriptApi };
+  return result.YoutubeTranscript;
 }
 
 /**
@@ -44,12 +67,6 @@ function formatVttTime(totalSeconds: number): string {
     '.' +
     String(ms).padStart(3, '0')
   );
-}
-
-interface TranscriptItem {
-  text: string;
-  offset: number;
-  duration: number;
 }
 
 interface YouTubeDataApiSnippet {
