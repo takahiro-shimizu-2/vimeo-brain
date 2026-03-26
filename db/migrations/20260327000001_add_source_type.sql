@@ -1,4 +1,5 @@
 -- migrate:up
+BEGIN;
 
 -- 1. 新カラム追加
 ALTER TABLE videos ADD COLUMN source_type VARCHAR(20) NOT NULL DEFAULT 'vimeo';
@@ -22,7 +23,11 @@ UPDATE knowledge_nodes
 SET properties = properties - 'vimeo_id' || jsonb_build_object('source_id', properties->>'vimeo_id')
 WHERE type = 'Video' AND properties ? 'vimeo_id';
 
+COMMIT;
+
 -- migrate:down
+BEGIN;
+
 ALTER TABLE videos ADD COLUMN vimeo_id VARCHAR(50);
 UPDATE videos SET vimeo_id = source_id WHERE source_type = 'vimeo';
 DROP INDEX IF EXISTS idx_videos_source;
@@ -36,3 +41,5 @@ CREATE INDEX idx_videos_vimeo_id ON videos(vimeo_id);
 UPDATE knowledge_nodes
 SET properties = properties - 'source_id' || jsonb_build_object('vimeo_id', properties->>'source_id')
 WHERE type = 'Video' AND properties ? 'source_id';
+
+COMMIT;
