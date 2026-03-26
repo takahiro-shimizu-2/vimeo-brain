@@ -1,0 +1,26 @@
+{
+  "name": "@vimeo-brain/knowledge-engine",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@vimeo-brain/shared": "*",
+    "graphology": "^0.25.4",
+    "graphology-communities-louvain": "^2.0.1",
+    "node-webvtt": "^1.9.4",
+    "pg": "^8.13.0",
+    "pino": "^9.5.0",
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.0",
+    "@types/uuid": "^10.0.0",
+    "typescript": "^5.7.0"
+  }
+}
