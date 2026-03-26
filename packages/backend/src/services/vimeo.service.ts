@@ -20,13 +20,11 @@ export interface VimeoTextTrack {
 const VIMEO_API = 'https://api.vimeo.com';
 
 export class VimeoService {
-  private token: string;
-
-  constructor() {
+  private get token(): string {
     if (!config.VIMEO_ACCESS_TOKEN) {
-      throw new Error('VIMEO_ACCESS_TOKEN is required');
+      throw AppError.internal('VIMEO_ACCESS_TOKEN is not configured');
     }
-    this.token = config.VIMEO_ACCESS_TOKEN;
+    return config.VIMEO_ACCESS_TOKEN;
   }
 
   private async request<T>(path: string): Promise<T> {
