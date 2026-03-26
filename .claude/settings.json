@@ -1,0 +1,38 @@
+{
+  "projectContext": "vimeo-brain - Vimeo動画文字起こし自動取り込み型チャットボット",
+  "preferredStyle": {
+    "language": "TypeScript",
+    "typeMode": "strict",
+    "commitMessage": "conventional",
+    "documentation": "JSDoc",
+    "testing": "Vitest"
+  },
+  "agents": {
+    "coordinator": ".claude/agents/coordinator-agent.md",
+    "codegen": ".claude/agents/codegen-agent.md",
+    "review": ".claude/agents/review-agent.md",
+    "issue": ".claude/agents/issue-agent.md",
+    "pr": ".claude/agents/pr-agent.md",
+    "deployment": ".claude/agents/deployment-agent.md"
+  },
+  "qualityThreshold": {
+    "minScore": 80,
+    "testCoverage": 80,
+    "typeScriptErrors": 0,
+    "eslintErrors": 0
+  },
+  "hooks": {
+    "userPromptSubmit": ".claude/hooks/log-commands.sh"
+  },
+  "logging": {
+    "directory": ".ai/logs",
+    "format": "LDD",
+    "level": "info"
+  },
+  "commands": {
+    "/test": ".claude/commands/test.md",
+    "/agent-run": ".claude/commands/agent-run.md",
+    "/verify": ".claude/commands/verify.md",
+    "/deploy": ".claude/commands/deploy.md"
+  }
+}
