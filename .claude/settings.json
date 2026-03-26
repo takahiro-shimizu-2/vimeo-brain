@@ -1,55 +1,13 @@
 {
-  "projectContext": "vimeo-brain - Vimeo動画文字起こし自動取り込み型チャットボット",
-  "preferredStyle": {
-    "language": "TypeScript",
-    "typeMode": "strict",
-    "commitMessage": "conventional",
-    "documentation": "JSDoc",
-    "testing": "Vitest"
-  },
-  "agents": {
-    "coordinator": ".claude/agents/coordinator-agent.md",
-    "codegen": ".claude/agents/codegen-agent.md",
-    "review": ".claude/agents/review-agent.md",
-    "issue": ".claude/agents/issue-agent.md",
-    "pr": ".claude/agents/pr-agent.md",
-    "deployment": ".claude/agents/deployment-agent.md"
-  },
-  "qualityThreshold": {
-    "minScore": 80,
-    "testCoverage": 80,
-    "typeScriptErrors": 0,
-    "eslintErrors": 0
-  },
-  "escalation": {
-    "techLead": "takahiro-shimizu-2",
-    "po": "takahiro-shimizu-2",
-    "ciso": "takahiro-shimizu-2",
-    "cto": "takahiro-shimizu-2"
-  },
-  "hooks": {
-    "userPromptSubmit": ".claude/hooks/log-commands.sh"
-  },
-  "logging": {
-    "directory": ".ai/logs",
-    "format": "LDD",
-    "level": "info"
-  },
-  "commands": {
-    "/test": ".claude/commands/test.md",
-    "/agent-run": ".claude/commands/agent-run.md",
-    "/verify": ".claude/commands/verify.md",
-    "/deploy": ".claude/commands/deploy.md"
-  },
-  "shikigaku": {
-    "principles": [
-      "責任と権限の明確化",
-      "結果重視",
-      "階層の明確化",
-      "誤解・錯覚の排除",
-      "感情的判断の排除"
+  "permissions": {
+    "allow": [
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "Bash(docker compose *)",
+      "Bash(git *)",
+      "Bash(gh *)",
+      "Bash(miyabi *)"
     ],
-    "labels": 65,
-    "hierarchy": "Human → Coordinator → Specialist"
+    "deny": []
   }
 }
