@@ -4,11 +4,15 @@
   "private": true,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "vimeo-brain-mcp": "./dist/mcp/mcp-server.js"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
     "@vimeo-brain/shared": "*",
     "graphology": "^0.25.4",
     "graphology-communities-louvain": "^2.0.1",

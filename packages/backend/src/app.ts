@@ -6,6 +6,7 @@ import { errorHandler } from './middleware/error-handler.js';
 import { createHealthRouter } from './controllers/health.controller.js';
 import { createVideoRouter } from './controllers/video.controller.js';
 import { createWebhookRouter } from './controllers/webhook.controller.js';
+import { createChatRouter } from './controllers/chat.controller.js';
 
 export function createApp(pool: Pool): express.Application {
   const app = express();
@@ -18,6 +19,7 @@ export function createApp(pool: Pool): express.Application {
   app.use(createHealthRouter(pool));
   app.use(createVideoRouter(pool));
   app.use(createWebhookRouter(pool));
+  app.use(createChatRouter(pool));
 
   // Error handler (must be last)
   app.use(errorHandler);
