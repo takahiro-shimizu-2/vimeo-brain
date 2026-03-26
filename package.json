@@ -1,0 +1,14 @@
+{
+  "name": "vimeo-brain",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Auto-growing chatbot powered by Vimeo video transcripts",
+  "workspaces": ["packages/backend", "packages/frontend", "packages/shared"],
+  "scripts": {
+    "test": "echo \"No tests configured yet\" && exit 0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

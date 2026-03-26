@@ -1,0 +1,18 @@
+github:
+  defaultPrivate: true
+
+project:
+  defaultLanguage: typescript
+  defaultFramework: react
+  gitignoreTemplate: Node
+  licenseTemplate: mit
+
+workflows:
+  autoLabel: true
+  autoReview: true
+  autoSync: true
+
+cli:
+  language: ja
+  theme: default
+  verboseErrors: true
