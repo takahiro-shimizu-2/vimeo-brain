@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: vimeo-brain-postgres
+    environment:
+      POSTGRES_DB: vimeo_brain
+      POSTGRES_USER: vimeo
+      POSTGRES_PASSWORD: vimeo
+    ports:
+      - "5434:5432"
+    volumes:
+      - vimeo-brain-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vimeo -d vimeo_brain"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  vimeo-brain-pgdata:
