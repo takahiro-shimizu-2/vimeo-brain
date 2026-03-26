@@ -1,0 +1,197 @@
+name: 🔔 Webhook Event Handler
+
+# Central event router for GitHub OS Event Bus
+# Addresses Issue #5 - Phase B: Event Bus Implementation
+
+on:
+  issues:
+    types: [opened, labeled, closed, assigned, milestoned]
+  pull_request:
+    types: [opened, synchronize, closed, review_requested]
+  issue_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+  push:
+    branches: ['feat/**']
+  workflow_run:
+    workflows: ["*"]
+    types: [completed]
+
+permissions:
+  issues: write
+  pull-requests: write
+  actions: write
+  contents: read
+
+jobs:
+  route-event:
+    runs-on: ubuntu-latest
+    name: Route Event to Appropriate Handler
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log Event
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🔔 WEBHOOK EVENT RECEIVED"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Event: ${{ github.event_name }}"
+          echo "Action: ${{ github.event.action }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      - name: Route to Agent - Issue Opened
+        if: github.event_name == 'issues' && github.event.action == 'opened'
+        run: |
+          echo "🤖 Routing to: IssueAgent"
+          echo "Task: Analyze new Issue #${{ github.event.issue.number }}"
+
+          # Check if Issue has agent-related labels
+          LABELS="${{ toJson(github.event.issue.labels.*.name) }}"
+
+          if echo "$LABELS" | grep -q "🤖agent"; then
+            echo "✅ Agent label detected, will auto-process"
+            # TODO: Trigger IssueAgent workflow when implemented
+          else
+            echo "ℹ️ Regular issue, manual triage required"
+          fi
+
+      - name: Route to Agent - Issue Labeled with Execute
+        if: |
+          github.event_name == 'issues' &&
+          github.event.action == 'labeled' &&
+          github.event.label.name == '🤖agent-execute'
+        run: |
+          echo "🚀 AGENT EXECUTION TRIGGERED"
+          echo "Issue: #${{ github.event.issue.number }}"
+          echo "Title: ${{ github.event.issue.title }}"
+
+          # Trigger CoordinatorAgent workflow
+          gh workflow run agent-runner.yml \
+            -f issue_number=${{ github.event.issue.number }} \
+            -f mode=autonomous \
+            || echo "⚠️ agent-runner.yml not found yet (will be created in Issue #4)"
+
+      - name: Route to Agent - PR Opened
+        if: github.event_name == 'pull_request' && github.event.action == 'opened'
+        run: |
+          echo "📝 Routing to: ReviewAgent"
+          echo "PR: #${{ github.event.pull_request.number }}"
+          echo "Draft: ${{ github.event.pull_request.draft }}"
+
+          if [ "${{ github.event.pull_request.draft }}" == "false" ]; then
+            echo "✅ Ready for review, triggering ReviewAgent"
+            # TODO: Trigger ReviewAgent workflow
+          else
+            echo "ℹ️ Draft PR, skipping auto-review"
+          fi
+
+      - name: Route to Agent - Comment Command
+        if: github.event_name == 'issue_comment' && github.event.action == 'created'
+        run: |
+          COMMENT_BODY="${{ github.event.comment.body }}"
+
+          if echo "$COMMENT_BODY" | grep -q "^/agent"; then
+            echo "💬 Agent command detected in comment"
+            echo "Command: $COMMENT_BODY"
+
+            # Parse command
+            COMMAND=$(echo "$COMMENT_BODY" | sed 's/^\/agent //')
+
+            case "$COMMAND" in
+              "analyze")
+                echo "🔍 Triggering IssueAgent for analysis"
+                ;;
+              "execute")
+                echo "🚀 Triggering CoordinatorAgent for execution"
+                ;;
+              "review")
+                echo "📝 Triggering ReviewAgent for code review"
+                ;;
+              "status")
+                echo "📊 Fetching current status"
+                ;;
+              *)
+                echo "❌ Unknown command: $COMMAND"
+                gh api \
+                  --method POST \
+                  -H "Accept: application/vnd.github+json" \
+                  /repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments \
+                  -f body="❌ Unknown command: \`$COMMAND\`
+
+                Available commands:
+                - \`/agent analyze\` - Analyze Issue
+                - \`/agent execute\` - Start autonomous execution
+                - \`/agent review\` - Request code review
+                - \`/agent status\` - Check current status"
+                ;;
+            esac
+          fi
+
+      - name: Route to Agent - PR Merged
+        if: |
+          github.event_name == 'pull_request' &&
+          github.event.action == 'closed' &&
+          github.event.pull_request.merged == true
+        run: |
+          echo "🎉 PR #${{ github.event.pull_request.number }} merged!"
+          echo "Branch: ${{ github.event.pull_request.head.ref }} → ${{ github.event.pull_request.base.ref }}"
+
+          # If merged to main, may trigger deployment
+          if [ "${{ github.event.pull_request.base.ref }}" == "main" ]; then
+            echo "🚀 Merged to main, considering deployment..."
+            # TODO: Trigger DeploymentAgent if applicable
+          fi
+
+      - name: Route to Agent - Workflow Failed
+        if: |
+          github.event_name == 'workflow_run' &&
+          github.event.workflow_run.conclusion == 'failure'
+        run: |
+          echo "🚨 WORKFLOW FAILURE DETECTED"
+          echo "Workflow: ${{ github.event.workflow_run.name }}"
+          echo "Conclusion: ${{ github.event.workflow_run.conclusion }}"
+          echo "Run ID: ${{ github.event.workflow_run.id }}"
+
+          # Escalate to Guardian for critical failures
+          if echo "${{ github.event.workflow_run.name }}" | grep -qE "(agent-runner|economic-circuit-breaker)"; then
+            echo "🚨 Critical workflow failed, escalating to Guardian"
+
+            gh issue create \
+              --title "🚨 Critical Workflow Failure: ${{ github.event.workflow_run.name }}" \
+              --label "🔥Sev.1-Critical,🤖AI-システム" \
+              --assignee "${{ github.repository_owner }}" \
+              --body "## 🚨 Critical Workflow Failure
+
+            **Workflow**: ${{ github.event.workflow_run.name }}
+            **Conclusion**: ${{ github.event.workflow_run.conclusion }}
+            **Run ID**: ${{ github.event.workflow_run.id }}
+            **Run URL**: ${{ github.event.workflow_run.html_url }}
+
+            This workflow is critical to Agentic OS operations. Immediate Guardian attention required.
+
+            ### Next Steps
+            1. Review workflow logs
+            2. Identify root cause
+            3. Fix or rollback changes
+            4. Re-run workflow
+
+            ---
+            **Escalated by**: Webhook Handler
+            **Timestamp**: $(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+              || echo "⚠️ Failed to create escalation Issue"
+          fi
+
+      - name: Event Summary
+        if: always()
+        run: |
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 EVENT ROUTING SUMMARY"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Event processed: ${{ github.event_name }}.${{ github.event.action }}"
+          echo "🎯 Routing completed at: $(date -u +%H:%M:%S)"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop, feat/**, fix/**, refactor/**]
+  pull_request:
+    branches: [main, develop, feat/**, fix/**, refactor/**]
+
+jobs:
+  backend-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: packages/backend/package-lock.json
+
+      - run: npm ci
+      - run: npx tsc --noEmit
+
+  frontend-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: packages/frontend/package-lock.json
+
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm run build
+
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Backend audit
+        working-directory: packages/backend
+        run: npm audit --audit-level=high || true
+
+      - name: Frontend audit
+        working-directory: packages/frontend
+        run: npm audit --audit-level=high || true

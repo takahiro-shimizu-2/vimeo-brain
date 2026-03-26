@@ -1,0 +1,30 @@
+name: Update Project Status
+
+# Disabled: GitHub Project #1 does not exist yet.
+# Re-enable when project board is created and GH_PROJECT_TOKEN is configured.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  update-status:
+    runs-on: ubuntu-latest
+    name: Update project item status
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Update Project Status
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PROJECT_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+          EVENT_ACTION: ${{ github.event.action }}
+        run: |
+          echo "Project status update is disabled until GitHub Project is configured."

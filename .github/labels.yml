@@ -1,0 +1,175 @@
+- name: "🐛 type:bug"
+  color: "d73a4a"
+  description: "Bug or regression"
+
+- name: "✨ type:feature"
+  color: "a2eeef"
+  description: "New feature or product enhancement"
+
+- name: "📚 type:docs"
+  color: "0075ca"
+  description: "Documentation work"
+
+- name: "♻️ type:refactor"
+  color: "fbca04"
+  description: "Refactoring or cleanup"
+
+- name: "🧪 type:test"
+  color: "bfd4f2"
+  description: "Testing related work"
+
+- name: "📊 priority:P0-Critical"
+  color: "b60205"
+  description: "Critical priority"
+
+- name: "⚠️ priority:P1-High"
+  color: "d93f0b"
+  description: "High priority"
+
+- name: "📊 priority:P2-Medium"
+  color: "fbca04"
+  description: "Medium priority"
+
+- name: "📊 priority:P3-Low"
+  color: "0e8a16"
+  description: "Low priority"
+
+- name: "📥 state:pending"
+  color: "ededed"
+  description: "Waiting for triage"
+
+- name: "🔍 state:analyzing"
+  color: "fef2c0"
+  description: "Analysis in progress"
+
+- name: "🏗️ state:implementing"
+  color: "c2e0c6"
+  description: "Implementation in progress"
+
+- name: "👀 state:reviewing"
+  color: "d4c5f9"
+  description: "Review in progress"
+
+- name: "🧪 state:testing"
+  color: "bfd4f2"
+  description: "Testing in progress"
+
+- name: "🚀 state:deploying"
+  color: "0e8a16"
+  description: "Deployment in progress"
+
+- name: "✅ state:done"
+  color: "0e8a16"
+  description: "Completed"
+
+- name: "🚫 state:blocked"
+  color: "b60205"
+  description: "Blocked"
+
+- name: "⏸️ state:paused"
+  color: "cccccc"
+  description: "Paused"
+
+- name: "❌ state:failed"
+  color: "b60205"
+  description: "Failed"
+
+- name: "🎯 phase:planning"
+  color: "fef2c0"
+  description: "Planning phase"
+
+- name: "🎯 phase:design"
+  color: "bfdadc"
+  description: "Design phase"
+
+- name: "🎯 phase:development"
+  color: "c2e0c6"
+  description: "Development phase"
+
+- name: "🎯 phase:review"
+  color: "d4c5f9"
+  description: "Review phase"
+
+- name: "🎯 phase:deployment"
+  color: "0e8a16"
+  description: "Deployment phase"
+
+- name: "🤖 agent:coordinator"
+  color: "e99695"
+  description: "Coordinator agent"
+
+- name: "🤖 agent:codegen"
+  color: "c5def5"
+  description: "Code generation agent"
+
+- name: "🤖 agent:review"
+  color: "bfd4f2"
+  description: "Review agent"
+
+- name: "🤖 agent:issue"
+  color: "d4c5f9"
+  description: "Issue agent"
+
+- name: "🤖 agent:pr"
+  color: "f9d0c4"
+  description: "Pull request agent"
+
+- name: "🤖 agent:deployment"
+  color: "c2e0c6"
+  description: "Deployment agent"
+
+- name: "🤖 agent:test"
+  color: "bfd4f2"
+  description: "Test agent"
+
+- name: "🤖agent-execute"
+  color: "5319e7"
+  description: "Legacy execution trigger label"
+
+- name: "🔥 severity:Sev.1-Critical"
+  color: "b60205"
+  description: "Critical severity"
+
+- name: "⚠️ severity:Sev.2-High"
+  color: "d93f0b"
+  description: "High severity"
+
+- name: "📊 severity:Sev.3-Medium"
+  color: "fbca04"
+  description: "Medium severity"
+
+- name: "🟢 severity:Sev.4-Low"
+  color: "0e8a16"
+  description: "Low severity"
+
+- name: "📊 report:weekly"
+  color: "0366d6"
+  description: "Weekly automation report"
+
+- name: "📊 report:kpi"
+  color: "0052cc"
+  description: "Weekly KPI report"
+
+- name: "🤖 system:automation"
+  color: "5319e7"
+  description: "Automation-managed issue or PR"
+
+- name: "👀 needs-review"
+  color: "d4c5f9"
+  description: "Needs human review"
+
+- name: "🚨 escalated"
+  color: "b60205"
+  description: "Escalated for manual attention"
+
+- name: "❌ agent:failed"
+  color: "d73a4a"
+  description: "Autonomous agent execution failed"
+
+- name: "💰 economic:warning"
+  color: "fbca04"
+  description: "Budget warning threshold reached"
+
+- name: "💰 economic:emergency"
+  color: "b60205"
+  description: "Budget emergency threshold reached"

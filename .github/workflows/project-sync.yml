@@ -1,0 +1,20 @@
+name: Sync Issues to Project
+
+# Disabled: GitHub Project #1 does not exist yet.
+# Re-enable when project board is created and GH_PROJECT_TOKEN is configured.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  sync-to-project:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: read
+      pull-requests: read
+
+    steps:
+      - name: Sync to GitHub Projects
+        uses: actions/add-to-project@v0.5.0
+        with:
+          project-url: https://github.com/users/${{ github.repository_owner }}/projects/1
+          github-token: ${{ secrets.GITHUB_TOKEN }}
