@@ -9,6 +9,7 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@vimeo-brain/knowledge-engine": "*",
     "@vimeo-brain/shared": "*",
     "cors": "^2.8.5",
     "dotenv": "^16.4.0",

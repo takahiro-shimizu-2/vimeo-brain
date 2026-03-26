@@ -4,6 +4,8 @@ import type { Pool } from 'pg';
 import { requestLogger } from './middleware/request-logger.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { createHealthRouter } from './controllers/health.controller.js';
+import { createVideoRouter } from './controllers/video.controller.js';
+import { createWebhookRouter } from './controllers/webhook.controller.js';
 
 export function createApp(pool: Pool): express.Application {
   const app = express();
@@ -14,6 +16,8 @@ export function createApp(pool: Pool): express.Application {
 
   // Routes
   app.use(createHealthRouter(pool));
+  app.use(createVideoRouter(pool));
+  app.use(createWebhookRouter(pool));
 
   // Error handler (must be last)
   app.use(errorHandler);
