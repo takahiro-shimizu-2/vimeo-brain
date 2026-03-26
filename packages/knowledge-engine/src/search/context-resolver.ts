@@ -207,42 +207,69 @@ async function expandFromSeeds(
   maxDepth: number,
 ): Promise<ScoredNode[]> {
   const visited = new Set<string>();
-  const queue: QueueItem[] = [];
   const neighborNodeIds: string[] = [];
   const neighborEntries: Array<{ nodeId: string; score: number; depth: number }> = [];
 
-  // Initialise queue with seed nodes
-  for (const seed of seeds) {
-    queue.push({ nodeId: seed.node.id, score: seed.score, depth: 0 });
-  }
+  // Current BFS frontier: start with seed nodes
+  let currentLevel: QueueItem[] = seeds.map((s) => ({
+    nodeId: s.node.id,
+    score: s.score,
+    depth: 0,
+  }));
 
-  // BFS-style expansion with edge-weight decay
-  let head = 0;
-  while (head < queue.length) {
-    const item = queue[head++];
+  // BFS level-by-level with batched edge fetching
+  while (currentLevel.length > 0) {
+    // Mark current level as visited, collect those needing expansion
+    const toExpand: QueueItem[] = [];
+    for (const item of currentLevel) {
+      if (visited.has(item.nodeId)) continue;
+      visited.add(item.nodeId);
 
-    if (visited.has(item.nodeId)) continue;
-    visited.add(item.nodeId);
+      if (item.depth > 0) {
+        neighborNodeIds.push(item.nodeId);
+        neighborEntries.push(item);
+      }
 
-    // depth > 0 means it's a neighbour (not the seed itself)
-    if (item.depth > 0) {
-      neighborNodeIds.push(item.nodeId);
-      neighborEntries.push(item);
+      if (item.depth < maxDepth) {
+        toExpand.push(item);
+      }
     }
 
-    if (item.depth >= maxDepth) continue;
+    if (toExpand.length === 0) break;
 
-    const edges = await store.findEdgesBidirectional(item.nodeId);
-    for (const edge of edges) {
-      const neighborId = edge.source_id === item.nodeId ? edge.target_id : edge.source_id;
-      if (visited.has(neighborId)) continue;
+    // Batch fetch all edges for this level in a single query
+    const expandIds = toExpand.map((item) => item.nodeId);
+    const allEdges = await store.findEdgesBidirectionalBatch(expandIds);
 
-      const edgeWeight = EDGE_WEIGHTS[edge.type] ?? 0.3;
-      const neighborScore = (item.score * edgeWeight) / (item.depth + 1);
-      if (neighborScore < PRUNE_THRESHOLD) continue;
-
-      queue.push({ nodeId: neighborId, score: neighborScore, depth: item.depth + 1 });
+    // Group edges by source/target node
+    const edgesByNode = new Map<string, typeof allEdges>();
+    for (const edge of allEdges) {
+      for (const id of expandIds) {
+        if (edge.source_id === id || edge.target_id === id) {
+          const list = edgesByNode.get(id) ?? [];
+          list.push(edge);
+          edgesByNode.set(id, list);
+        }
+      }
     }
+
+    // Build next level
+    const nextLevel: QueueItem[] = [];
+    for (const item of toExpand) {
+      const edges = edgesByNode.get(item.nodeId) ?? [];
+      for (const edge of edges) {
+        const neighborId = edge.source_id === item.nodeId ? edge.target_id : edge.source_id;
+        if (visited.has(neighborId)) continue;
+
+        const edgeWeight = EDGE_WEIGHTS[edge.type] ?? 0.3;
+        const neighborScore = (item.score * edgeWeight) / (item.depth + 1);
+        if (neighborScore < PRUNE_THRESHOLD) continue;
+
+        nextLevel.push({ nodeId: neighborId, score: neighborScore, depth: item.depth + 1 });
+      }
+    }
+
+    currentLevel = nextLevel;
   }
 
   // Batch-fetch actual node data for all discovered neighbours

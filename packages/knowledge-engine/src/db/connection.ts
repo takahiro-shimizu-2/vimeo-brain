@@ -229,6 +229,16 @@ export class GraphStore {
     return rows as KnowledgeNode[];
   }
 
+  async findEdgesBidirectionalBatch(nodeIds: string[]): Promise<KnowledgeEdge[]> {
+    if (nodeIds.length === 0) return [];
+    const { rows } = await this.pool.query(
+      `SELECT * FROM knowledge_edges
+       WHERE source_id = ANY($1) OR target_id = ANY($1)`,
+      [nodeIds]
+    );
+    return rows as KnowledgeEdge[];
+  }
+
   async getRecentSegments(limit: number = 20): Promise<KnowledgeNode[]> {
     const { rows } = await this.pool.query(
       `SELECT * FROM knowledge_nodes
@@ -240,7 +250,7 @@ export class GraphStore {
     return rows as KnowledgeNode[];
   }
 
-  async getPool(): Promise<Pool> {
+  getPool(): Pool {
     return this.pool;
   }
 

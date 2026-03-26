@@ -40,7 +40,7 @@ export interface PreprocessedQuery {
  *   U+3000 - U+9FFF  (CJK Symbols, Hiragana, Katakana, CJK Unified Ideographs)
  *   U+F900 - U+FAFF  (CJK Compatibility Ideographs)
  */
-function isCJKChar(char: string): boolean {
+export function isCJKChar(char: string): boolean {
   const code = char.charCodeAt(0);
   return (code >= 0x3000 && code <= 0x9fff) || (code >= 0xf900 && code <= 0xfaff);
 }

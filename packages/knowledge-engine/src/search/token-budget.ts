@@ -1,10 +1,11 @@
 /**
  * Token budget management for LLM context windows.
  *
- * Pure functions with no external dependencies.
  * Provides heuristic token estimation and knapsack-style item selection
  * that fits within a given token budget.
  */
+
+import { isCJKChar } from './japanese-preprocessor.js';
 
 /** Result of selecting items within a token budget. */
 export interface BudgetResult<T> {
@@ -14,18 +15,6 @@ export interface BudgetResult<T> {
   totalTokens: number;
   /** Number of items that were excluded. */
   prunedCount: number;
-}
-
-/**
- * Returns true if the character falls within CJK Unicode ranges.
- *
- * Covered ranges:
- * - U+3000..U+9FFF  (CJK symbols, hiragana, katakana, unified ideographs)
- * - U+F900..U+FAFF  (CJK compatibility ideographs)
- */
-function isCJKChar(char: string): boolean {
-  const code = char.charCodeAt(0);
-  return (code >= 0x3000 && code <= 0x9fff) || (code >= 0xf900 && code <= 0xfaff);
 }
 
 /**
