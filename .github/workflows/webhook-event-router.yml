@@ -20,6 +20,8 @@ permissions:
 jobs:
   route-event:
     runs-on: ubuntu-latest
+    # Disabled until scripts/webhook-router.ts is implemented
+    if: false
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

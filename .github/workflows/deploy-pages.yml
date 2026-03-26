@@ -26,6 +26,8 @@ concurrency:
 jobs:
   generate-data:
     runs-on: ubuntu-latest
+    # Disabled until scripts/generate-dashboard-data.ts is implemented
+    if: false
     name: Generate dashboard data
     steps:
       - name: Checkout

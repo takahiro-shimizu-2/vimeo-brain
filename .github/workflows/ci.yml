@@ -9,10 +9,6 @@ on:
 jobs:
   backend-check:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: packages/backend
-
     steps:
       - uses: actions/checkout@v4
 
@@ -20,17 +16,19 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: packages/backend/package-lock.json
 
       - run: npm ci
-      - run: npx tsc --noEmit
+
+      - name: Build shared
+        run: npm run build --workspace=packages/shared
+
+      - name: TypeScript check (backend)
+        run: npx tsc --noEmit
+        working-directory: packages/backend
 
   frontend-check:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: packages/frontend
-
+    if: ${{ hashFiles('packages/frontend/package.json') != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -38,11 +36,19 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: packages/frontend/package-lock.json
 
       - run: npm ci
-      - run: npx tsc --noEmit
-      - run: npm run build
+
+      - name: Build shared
+        run: npm run build --workspace=packages/shared
+
+      - name: TypeScript check (frontend)
+        run: npx tsc --noEmit
+        working-directory: packages/frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: packages/frontend
 
   security-audit:
     runs-on: ubuntu-latest
@@ -53,10 +59,5 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Backend audit
-        working-directory: packages/backend
-        run: npm audit --audit-level=high || true
-
-      - name: Frontend audit
-        working-directory: packages/frontend
+      - name: Root audit
         run: npm audit --audit-level=high || true
