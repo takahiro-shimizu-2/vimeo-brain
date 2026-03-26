@@ -1,0 +1,42 @@
+# ============================================================
+# Dockerfile.frontend — Multi-stage build for @vimeo-brain/frontend
+# ============================================================
+
+# ------ Stage 1: Build ------
+FROM node:20-slim AS builder
+
+WORKDIR /app
+
+# Copy package files for dependency resolution
+COPY package.json package-lock.json ./
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/frontend/package.json ./packages/frontend/
+
+# Remove local-only dependencies that don't exist in Docker context
+RUN node -e " \
+  const pkg = require('./package.json'); \
+  delete pkg.dependencies; \
+  require('fs').writeFileSync('./package.json', JSON.stringify(pkg, null, 2));"
+
+# Install all dependencies (including devDependencies for build)
+RUN npm ci --ignore-scripts
+
+# Copy source code
+COPY tsconfig.base.json ./
+COPY packages/shared/ ./packages/shared/
+COPY packages/frontend/ ./packages/frontend/
+
+# Build shared types first, then frontend
+RUN npm run build --workspace=packages/shared && \
+    npm run build --workspace=packages/frontend
+
+# ------ Stage 2: Production (nginx) ------
+FROM nginx:alpine
+
+# Copy nginx configuration
+COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy built static assets from builder
+COPY --from=builder /app/packages/frontend/dist/ /usr/share/nginx/html/
+
+EXPOSE 3000

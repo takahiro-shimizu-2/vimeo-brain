@@ -30,8 +30,6 @@ jobs:
 
   frontend-check:
     runs-on: ubuntu-latest
-    # Skip until packages/frontend is created in Phase 3
-    if: false
     steps:
       - uses: actions/checkout@v4
 
@@ -41,9 +39,6 @@ jobs:
           cache: 'npm'
 
       - run: npm ci
-
-      - name: Build shared
-        run: npm run build --workspace=packages/shared
 
       - name: TypeScript check (frontend)
         run: npx tsc --noEmit
