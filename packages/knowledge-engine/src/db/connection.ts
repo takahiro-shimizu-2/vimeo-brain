@@ -186,6 +186,60 @@ export class GraphStore {
     return rows as Array<KnowledgeNode & { distance: number }>;
   }
 
+  async rawTsSearch(tsquery: string, limit: number = 20): Promise<Array<KnowledgeNode & { rank: number }>> {
+    const { rows } = await this.pool.query(
+      `SELECT *, ts_rank(
+        to_tsvector('simple', COALESCE(text_content, '') || ' ' || COALESCE(name, '')),
+        to_tsquery('simple', $1)
+      ) AS rank
+      FROM knowledge_nodes
+      WHERE to_tsvector('simple', COALESCE(text_content, '') || ' ' || COALESCE(name, ''))
+        @@ to_tsquery('simple', $1)
+      ORDER BY rank DESC
+      LIMIT $2`,
+      [tsquery, limit]
+    );
+    return rows as Array<KnowledgeNode & { rank: number }>;
+  }
+
+  async findEdgesBidirectional(nodeId: string, types?: KnowledgeEdgeType[]): Promise<KnowledgeEdge[]> {
+    if (types && types.length > 0) {
+      const { rows } = await this.pool.query(
+        `SELECT * FROM knowledge_edges
+         WHERE (source_id = $1 OR target_id = $1)
+           AND type = ANY($2)`,
+        [nodeId, types]
+      );
+      return rows as KnowledgeEdge[];
+    }
+    const { rows } = await this.pool.query(
+      `SELECT * FROM knowledge_edges
+       WHERE source_id = $1 OR target_id = $1`,
+      [nodeId]
+    );
+    return rows as KnowledgeEdge[];
+  }
+
+  async findNodesByIds(ids: string[]): Promise<KnowledgeNode[]> {
+    if (ids.length === 0) return [];
+    const { rows } = await this.pool.query(
+      'SELECT * FROM knowledge_nodes WHERE id = ANY($1)',
+      [ids]
+    );
+    return rows as KnowledgeNode[];
+  }
+
+  async getRecentSegments(limit: number = 20): Promise<KnowledgeNode[]> {
+    const { rows } = await this.pool.query(
+      `SELECT * FROM knowledge_nodes
+       WHERE type = 'Segment'
+       ORDER BY created_at DESC
+       LIMIT $1`,
+      [limit]
+    );
+    return rows as KnowledgeNode[];
+  }
+
   async getPool(): Promise<Pool> {
     return this.pool;
   }

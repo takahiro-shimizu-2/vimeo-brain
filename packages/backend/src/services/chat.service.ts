@@ -1,6 +1,6 @@
 import type { Pool } from 'pg';
 import type { ChatSource, ChatMessage } from '@vimeo-brain/shared';
-import { GraphStore, hybridSearch, type SearchResult } from '@vimeo-brain/knowledge-engine';
+import { GraphStore, resolveContext, type ScoredNode, type QueryIntent } from '@vimeo-brain/knowledge-engine';
 import { ChatRepository } from '../repositories/chat.repository.js';
 import { LlmService } from './llm.service.js';
 import { EmbeddingService } from './embedding.service.js';
@@ -34,17 +34,24 @@ export class ChatService {
 
     await this.chatRepo.addMessage(sid, 'user', message);
 
-    const results = await hybridSearch(
+    const resolved = await resolveContext(
       this.graphStore,
       message,
       (texts) => this.embeddingService.embed(texts),
-      { limit: 5 },
+      { maxTokens: 4000 },
     );
 
-    const { contextText, sources } = this.buildContext(results);
-    const prompt = this.buildPrompt(message, contextText);
+    const { contextText, sources } = this.buildContext(resolved.nodes);
+    const prompt = this.buildPrompt(message, contextText, resolved.intent);
 
-    logger.debug({ sessionId: sid, resultCount: results.length }, 'RAG search completed');
+    logger.debug({
+      sessionId: sid,
+      resultCount: resolved.nodes.length,
+      intent: resolved.intent,
+      fallbackLevel: resolved.fallbackLevel,
+      totalTokens: resolved.totalTokens,
+      prunedCount: resolved.prunedCount,
+    }, 'Context resolved');
 
     const response = await this.llmService.complete(prompt);
 
@@ -58,7 +65,7 @@ export class ChatService {
     return { session_id: sid, message: assistantMsg };
   }
 
-  private buildContext(results: SearchResult[]): {
+  private buildContext(results: ScoredNode[]): {
     contextText: string;
     sources: ChatSource[];
   } {
@@ -87,12 +94,17 @@ export class ChatService {
     return { contextText: parts.join('\n\n'), sources };
   }
 
-  private buildPrompt(question: string, context: string): string {
+  private buildPrompt(question: string, context: string, intent?: QueryIntent): string {
     if (!context) {
       return `ユーザーの質問に答えてください。関連する動画情報がない場合はその旨を伝えてください。\n\n質問: ${question}`;
     }
 
-    return `以下の動画の文字起こしに基づいて、ユーザーの質問に答えてください。回答は日本語で、具体的に。情報源の動画タイトルとタイムスタンプを参照してください。
+    const intentHint =
+      intent === 'overview' ? 'まとめ・概要を重視して回答してください。'
+      : intent === 'who_what' ? '人物や概念の説明を重視して回答してください。'
+      : '';
+
+    return `以下の動画の文字起こしに基づいて、ユーザーの質問に答えてください。${intentHint}回答は日本語で、具体的に。情報源の動画タイトルとタイムスタンプを参照してください。
 
 --- 関連する動画の文字起こし ---
 ${context}
