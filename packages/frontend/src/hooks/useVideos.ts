@@ -4,6 +4,7 @@ import { videosApi, type Video, type VideoSourceType } from '../api/videos.api';
 export function useVideos() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -18,8 +19,15 @@ export function useVideos() {
   useEffect(() => { refresh(); }, [refresh]);
 
   const addVideo = useCallback(async (sourceType: VideoSourceType, sourceId: string) => {
-    await videosApi.create(sourceType, sourceId);
-    await refresh();
+    setError(null);
+    try {
+      await videosApi.create(sourceType, sourceId);
+      await refresh();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '動画の追加に失敗しました';
+      setError(msg);
+      throw err;
+    }
   }, [refresh]);
 
   const removeVideo = useCallback(async (id: string) => {
@@ -32,5 +40,5 @@ export function useVideos() {
     await refresh();
   }, [refresh]);
 
-  return { videos, loading, refresh, addVideo, removeVideo, startIngest };
+  return { videos, loading, error, refresh, addVideo, removeVideo, startIngest };
 }
