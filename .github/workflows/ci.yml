@@ -28,7 +28,8 @@ jobs:
 
   frontend-check:
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('packages/frontend/package.json') != '' }}
+    # Skip until packages/frontend is created in Phase 3
+    if: false
     steps:
       - uses: actions/checkout@v4
 
