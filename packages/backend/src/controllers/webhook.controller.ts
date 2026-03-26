@@ -46,7 +46,7 @@ export function createWebhookRouter(pool: Pool): Router {
       if (topic === 'video.text_track.complete') {
         const vimeoId = extractVimeoId(video_id);
         if (vimeoId) {
-          const video = await videoRepo.findByVimeoId(vimeoId);
+          const video = await videoRepo.findBySourceId('vimeo', vimeoId);
           if (video) {
             ingestService.ingest(video.id).catch((err) => {
               logger.error({ err, videoId: video.id }, 'Webhook-triggered ingestion error');

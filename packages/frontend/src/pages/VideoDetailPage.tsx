@@ -35,10 +35,10 @@ export function VideoDetailPage() {
   return (
     <Box>
       <Typography variant="h5" fontWeight={700} gutterBottom>
-        {video.title || `Vimeo ${video.vimeo_id}`}
+        {video.title || `${video.source_type === 'youtube' ? 'YouTube' : 'Vimeo'} ${video.source_id}`}
       </Typography>
       <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
-        <Chip label={`Vimeo ID: ${video.vimeo_id}`} />
+        <Chip label={`${video.source_type === 'youtube' ? 'YouTube' : 'Vimeo'}: ${video.source_id}`} />
         <IngestStatusBadge status={video.ingest_status} />
       </Box>
       {video.description && (

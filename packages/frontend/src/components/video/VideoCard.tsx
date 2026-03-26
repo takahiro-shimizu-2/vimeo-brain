@@ -12,10 +12,10 @@ export function VideoCard({ video }: { video: Video }) {
     >
       <CardContent>
         <Typography variant="subtitle1" fontWeight={600} noWrap>
-          {video.title || `Vimeo ${video.vimeo_id}`}
+          {video.title || `${video.source_type === 'youtube' ? 'YouTube' : 'Vimeo'} ${video.source_id}`}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
-          <Chip label={`ID: ${video.vimeo_id}`} size="small" variant="outlined" />
+          <Chip label={`${video.source_type === 'youtube' ? 'YouTube' : 'Vimeo'}: ${video.source_id}`} size="small" variant="outlined" />
           <IngestStatusBadge status={video.ingest_status} />
         </Box>
       </CardContent>

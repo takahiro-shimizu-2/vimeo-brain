@@ -44,7 +44,7 @@ export class PollingService {
     for (const video of videos) {
       if (video.ingest_status === 'pending') {
         logger.info(
-          { videoId: video.id, vimeoId: video.vimeo_id },
+          { videoId: video.id, sourceType: video.source_type, sourceId: video.source_id },
           'Auto-ingesting pending video',
         );
         try {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { videosApi, type Video } from '../api/videos.api';
+import { videosApi, type Video, type VideoSourceType } from '../api/videos.api';
 
 export function useVideos() {
   const [videos, setVideos] = useState<Video[]>([]);
@@ -17,8 +17,8 @@ export function useVideos() {
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  const addVideo = useCallback(async (vimeoId: string) => {
-    await videosApi.create(vimeoId);
+  const addVideo = useCallback(async (sourceType: VideoSourceType, sourceId: string) => {
+    await videosApi.create(sourceType, sourceId);
     await refresh();
   }, [refresh]);
 

@@ -26,7 +26,7 @@ export async function buildGraph(
       'Video',
       videoTitle,
       videoDescription,
-      { vimeo_id: videoId, description: videoDescription, duration_seconds: null },
+      { source_id: videoId, description: videoDescription, duration_seconds: null },
       videoId
     );
   }

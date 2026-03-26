@@ -11,7 +11,7 @@ export interface KnowledgeNode {
 }
 
 export interface VideoNodeProps {
-  vimeo_id: string;
+  source_id: string;
   description: string | null;
   duration_seconds: number | null;
 }
