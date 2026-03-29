@@ -1,6 +1,6 @@
 import type { Pool } from 'pg';
 import type { IngestResult, IngestStatus, SourceType } from '@vimeo-brain/shared';
-import { runPipeline, runPipelineFromSegments, sha256, type PipelineResult } from '@vimeo-brain/knowledge-engine';
+import { runPipeline, runPipelineFromSegments, sha256, type PipelineResult, type KnowledgeNodeType } from '@vimeo-brain/knowledge-engine';
 import type { ContentSourceService } from './content-source.js';
 import { VimeoService } from './vimeo.service.js';
 import { YouTubeService } from './youtube.service.js';
@@ -15,7 +15,7 @@ import { logger } from '../utils/logger.js';
 /**
  * Map SourceType to knowledge graph node type.
  */
-export function sourceTypeToNodeType(sourceType: SourceType): string {
+export function sourceTypeToNodeType(sourceType: SourceType): KnowledgeNodeType {
   switch (sourceType) {
     case 'vimeo':
     case 'youtube':
