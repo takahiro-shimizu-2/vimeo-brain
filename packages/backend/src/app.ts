@@ -4,7 +4,7 @@ import type { Pool } from 'pg';
 import { requestLogger } from './middleware/request-logger.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { createHealthRouter } from './controllers/health.controller.js';
-import { createVideoRouter } from './controllers/video.controller.js';
+import { createSourceRouter } from './controllers/source.controller.js';
 import { createWebhookRouter } from './controllers/webhook.controller.js';
 import { createChatRouter } from './controllers/chat.controller.js';
 
@@ -17,7 +17,7 @@ export function createApp(pool: Pool): express.Application {
 
   // Routes
   app.use(createHealthRouter(pool));
-  app.use(createVideoRouter(pool));
+  app.use(createSourceRouter(pool));
   app.use(createWebhookRouter(pool));
   app.use(createChatRouter(pool));
 

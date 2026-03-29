@@ -75,17 +75,20 @@ const EDGE_WEIGHTS: Record<string, number> = {
 const BASE_TYPE_WEIGHTS: Record<KnowledgeNodeType, number> = {
   Segment: 1.0,
   Video: 0.9,
+  ChatRoom: 0.9,
+  Document: 0.9,
   Topic: 0.7,
   Concept: 0.5,
   NarrativeFlow: 0.3,
   Transcript: 0.2,
+  ContentBody: 0.2,
 };
 
 /** Intent-based adjustments per node type */
 const INTENT_ADJUSTMENTS: Record<QueryIntent, Partial<Record<KnowledgeNodeType, number>>> = {
-  factual: { Segment: 1.2, Video: 1.0, Topic: 0.8, Concept: 1.1, NarrativeFlow: 0.5, Transcript: 0.3 },
-  overview: { Segment: 0.8, Video: 1.0, Topic: 1.3, Concept: 0.7, NarrativeFlow: 1.2, Transcript: 0.3 },
-  who_what: { Segment: 1.1, Video: 1.0, Topic: 0.7, Concept: 1.3, NarrativeFlow: 0.5, Transcript: 0.3 },
+  factual: { Segment: 1.2, Video: 1.0, ChatRoom: 1.0, Document: 1.0, Topic: 0.8, Concept: 1.1, NarrativeFlow: 0.5, Transcript: 0.3, ContentBody: 0.3 },
+  overview: { Segment: 0.8, Video: 1.0, ChatRoom: 1.0, Document: 1.0, Topic: 1.3, Concept: 0.7, NarrativeFlow: 1.2, Transcript: 0.3, ContentBody: 0.3 },
+  who_what: { Segment: 1.1, Video: 1.0, ChatRoom: 1.0, Document: 1.0, Topic: 0.7, Concept: 1.3, NarrativeFlow: 0.5, Transcript: 0.3, ContentBody: 0.3 },
 };
 
 // ---------------------------------------------------------------------------

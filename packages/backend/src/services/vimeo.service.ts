@@ -1,7 +1,8 @@
 import { config } from '../config.js';
 import { logger } from '../utils/logger.js';
 import { AppError } from '../errors/app-error.js';
-import type { VideoSourceService, VideoMetadata } from './video-source.js';
+import type { VideoSourceService, VideoMetadata, ContentSourceService, ContentFetchResult } from './content-source.js';
+import { parseVtt, buildSegments } from '@vimeo-brain/knowledge-engine';
 
 export interface VimeoVideo {
   uri: string;
@@ -20,7 +21,7 @@ export interface VimeoTextTrack {
 
 const VIMEO_API = 'https://api.vimeo.com';
 
-export class VimeoService implements VideoSourceService {
+export class VimeoService implements VideoSourceService, ContentSourceService {
   private get token(): string {
     if (!config.VIMEO_ACCESS_TOKEN) {
       throw AppError.internal('VIMEO_ACCESS_TOKEN is not configured');
@@ -101,5 +102,30 @@ export class VimeoService implements VideoSourceService {
       throw AppError.internal(`No text tracks found for Vimeo video ${sourceId}`);
     }
     return this.downloadVtt(tracks[0].link);
+  }
+
+  /** ContentSourceService implementation: fetch content with segments. */
+  async fetchContent(sourceId: string): Promise<ContentFetchResult> {
+    const metadata = await this.getMetadata(sourceId);
+    const vttContent = await this.getTranscriptVtt(sourceId);
+    const parsed = parseVtt(vttContent);
+    const segments = buildSegments(parsed.cues);
+
+    return {
+      title: metadata.title,
+      description: metadata.description,
+      metadata: {
+        duration_seconds: metadata.duration_seconds,
+        thumbnail_url: metadata.thumbnail_url,
+      },
+      segments: segments.map((s) => ({
+        text: s.text,
+        start_ms: s.start_ms,
+        end_ms: s.end_ms,
+        sequence_index: s.sequence_index,
+        speaker: s.speaker,
+      })),
+      rawContent: vttContent,
+    };
   }
 }

@@ -1,7 +1,8 @@
 import { config } from '../config.js';
 import { logger } from '../utils/logger.js';
 import { AppError } from '../errors/app-error.js';
-import type { VideoSourceService, VideoMetadata } from './video-source.js';
+import type { VideoSourceService, VideoMetadata, ContentSourceService, ContentFetchResult } from './content-source.js';
+import { parseVtt, buildSegments } from '@vimeo-brain/knowledge-engine';
 
 interface TranscriptItem {
   text: string;
@@ -93,7 +94,7 @@ interface YouTubeOEmbedResponse {
   thumbnail_url: string;
 }
 
-export class YouTubeService implements VideoSourceService {
+export class YouTubeService implements VideoSourceService, ContentSourceService {
   /**
    * Fetch transcript from YouTube and convert to VTT format.
    */
@@ -189,6 +190,31 @@ export class YouTubeService implements VideoSourceService {
       description: null,
       duration_seconds: 0,
       thumbnail_url: data.thumbnail_url || null,
+    };
+  }
+
+  /** ContentSourceService implementation: fetch content with segments. */
+  async fetchContent(sourceId: string): Promise<ContentFetchResult> {
+    const metadata = await this.getMetadata(sourceId);
+    const vttContent = await this.getTranscriptVtt(sourceId);
+    const parsed = parseVtt(vttContent);
+    const segments = buildSegments(parsed.cues);
+
+    return {
+      title: metadata.title,
+      description: metadata.description,
+      metadata: {
+        duration_seconds: metadata.duration_seconds,
+        thumbnail_url: metadata.thumbnail_url,
+      },
+      segments: segments.map((s) => ({
+        text: s.text,
+        start_ms: s.start_ms,
+        end_ms: s.end_ms,
+        sequence_index: s.sequence_index,
+        speaker: s.speaker,
+      })),
+      rawContent: vttContent,
     };
   }
 }
