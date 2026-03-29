@@ -74,17 +74,23 @@ export class ChatService {
 
     for (const result of results) {
       const props = result.node.properties as Record<string, unknown>;
-      const videoTitle = (props.video_title as string) || 'Unknown';
-      const videoId = (props.video_id as string) || '';
+      // Support both new (source_*) and legacy (video_*) property keys
+      const sourceTitle = (props.source_title as string) || (props.video_title as string) || 'Unknown';
+      const sourceId = (props.source_id as string) || (props.video_id as string) || '';
+      const sourceType = (props.source_type as string) || 'video';
       const startMs = (props.start_ms as number) || 0;
       const text = result.node.text_content || result.node.name || '';
 
       if (text) {
-        const timestamp = formatTimestamp(startMs);
-        parts.push(`[${videoTitle} @ ${timestamp}]: ${text}`);
+        // Only show timestamp for sources that have meaningful timestamps (> 0)
+        const label = startMs > 0
+          ? `[${sourceTitle} @ ${formatTimestamp(startMs)}]`
+          : `[${sourceTitle}]`;
+        parts.push(`${label}: ${text}`);
         sources.push({
-          video_id: videoId,
-          video_title: videoTitle,
+          source_id: sourceId,
+          source_title: sourceTitle,
+          source_type: sourceType,
           timestamp_ms: startMs,
           segment_text: text.slice(0, 200),
         });
@@ -96,7 +102,7 @@ export class ChatService {
 
   private buildPrompt(question: string, context: string, intent?: QueryIntent): string {
     if (!context) {
-      return `ユーザーの質問に答えてください。関連する動画情報がない場合はその旨を伝えてください。\n\n質問: ${question}`;
+      return `ユーザーの質問に答えてください。関連する情報がない場合はその旨を伝えてください。\n\n質問: ${question}`;
     }
 
     const intentHint =
@@ -104,9 +110,9 @@ export class ChatService {
       : intent === 'who_what' ? '人物や概念の説明を重視して回答してください。'
       : '';
 
-    return `以下の動画の文字起こしに基づいて、ユーザーの質問に答えてください。${intentHint}回答は日本語で、具体的に。情報源の動画タイトルとタイムスタンプを参照してください。
+    return `以下のナレッジベースの情報に基づいて、ユーザーの質問に答えてください。${intentHint}回答は日本語で、具体的に。情報源のタイトルを参照してください。動画ソースの場合はタイムスタンプも参照してください。
 
---- 関連する動画の文字起こし ---
+--- 関連するナレッジベースの情報 ---
 ${context}
 --- ここまで ---
 

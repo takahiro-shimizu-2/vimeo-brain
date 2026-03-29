@@ -1,46 +1,53 @@
 import type { GraphStore } from '../db/connection.js';
+import type { KnowledgeNodeType } from '../schema/nodes.js';
 import type { BuiltSegment } from './segment-builder.js';
 import type { SegmentConcepts } from './concept-extractor.js';
 import { logger } from '../utils/logger.js';
 
 export interface GraphBuildResult {
-  videoNodeId: string;
-  transcriptNodeId: string;
+  sourceNodeId: string;
+  contentBodyNodeId: string;
   segmentNodeIds: string[];
   conceptNodeIds: string[];
+
+  /** @deprecated Use sourceNodeId */
+  videoNodeId: string;
+  /** @deprecated Use contentBodyNodeId */
+  transcriptNodeId: string;
 }
 
 export async function buildGraph(
   store: GraphStore,
-  videoId: string,
-  videoTitle: string,
-  videoDescription: string | null,
+  sourceId: string,
+  sourceTitle: string,
+  sourceDescription: string | null,
+  sourceNodeType: KnowledgeNodeType = 'Video',
   segments: BuiltSegment[],
   segmentConcepts: SegmentConcepts[],
-  transcriptHash: string
+  contentHash: string
 ): Promise<GraphBuildResult> {
-  // 1. Create/find Video node
-  let videoNode = await store.findNodeByHash(videoId);
-  if (!videoNode) {
-    videoNode = await store.addNode(
-      'Video',
-      videoTitle,
-      videoDescription,
-      { source_id: videoId, description: videoDescription, duration_seconds: null },
-      videoId
+  // 1. Create/find Source node (Video / ChatRoom / Document)
+  let sourceNode = await store.findNodeByHash(sourceId);
+  if (!sourceNode) {
+    sourceNode = await store.addNode(
+      sourceNodeType,
+      sourceTitle,
+      sourceDescription,
+      { source_id: sourceId, description: sourceDescription, duration_seconds: null, source_type: sourceNodeType },
+      sourceId
     );
   }
 
-  // 2. Create Transcript node
-  const transcriptNode = await store.addNode(
-    'Transcript',
-    `Transcript: ${videoTitle}`,
+  // 2. Create ContentBody node (replaces Transcript)
+  const contentBodyNode = await store.addNode(
+    'ContentBody',
+    `Content: ${sourceTitle}`,
     null,
-    { video_id: videoNode.id, language: 'auto', type: 'captions', segment_count: segments.length },
-    transcriptHash
+    { source_id: sourceNode.id, language: 'auto', type: 'captions', segment_count: segments.length },
+    contentHash
   );
 
-  await store.addEdge(videoNode.id, transcriptNode.id, 'CONTAINS');
+  await store.addEdge(sourceNode.id, contentBodyNode.id, 'CONTAINS');
 
   // 3. Create Segment nodes + CONTAINS + FOLLOWS edges
   const segmentNodeIds: string[] = [];
@@ -66,14 +73,15 @@ export async function buildGraph(
         end_ms: seg.end_ms,
         sequence_index: seg.sequence_index,
         speaker: seg.speaker,
-        video_id: videoNode.id,
-        video_title: videoTitle,
+        source_id: sourceNode.id,
+        source_title: sourceTitle,
+        source_type: sourceNodeType,
       },
       seg.content_hash
     );
     segmentNodeIds.push(segNode.id);
 
-    await store.addEdge(transcriptNode.id, segNode.id, 'CONTAINS', { sequence_index: seg.sequence_index });
+    await store.addEdge(contentBodyNode.id, segNode.id, 'CONTAINS', { sequence_index: seg.sequence_index });
 
     if (prevSegmentId) {
       await store.addEdge(prevSegmentId, segNode.id, 'FOLLOWS');
@@ -131,15 +139,19 @@ export async function buildGraph(
   }
 
   logger.info({
-    videoId: videoNode.id,
+    sourceNodeId: sourceNode.id,
+    sourceNodeType,
     segments: segmentNodeIds.length,
     concepts: conceptNodeIds.length,
   }, 'Graph built');
 
   return {
-    videoNodeId: videoNode.id,
-    transcriptNodeId: transcriptNode.id,
+    sourceNodeId: sourceNode.id,
+    contentBodyNodeId: contentBodyNode.id,
     segmentNodeIds,
     conceptNodeIds,
+    // deprecated aliases (same values)
+    videoNodeId: sourceNode.id,
+    transcriptNodeId: contentBodyNode.id,
   };
 }

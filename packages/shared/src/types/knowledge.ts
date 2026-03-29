@@ -6,8 +6,8 @@ export interface KnowledgeSegment {
   sequence_index: number;
   speaker: string | null;
   content_hash: string;
-  video_id: string;
-  video_title: string;
+  source_id: string;        // was video_id
+  source_title: string;     // was video_title
 }
 
 export interface KnowledgeTopic {

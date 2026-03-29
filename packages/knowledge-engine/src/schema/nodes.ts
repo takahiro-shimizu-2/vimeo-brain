@@ -1,4 +1,7 @@
-export type KnowledgeNodeType = 'Video' | 'Transcript' | 'Segment' | 'Topic' | 'Concept' | 'NarrativeFlow';
+export type KnowledgeNodeType =
+  | 'Video' | 'ChatRoom' | 'Document'
+  | 'Transcript' | 'ContentBody'
+  | 'Segment' | 'Topic' | 'Concept' | 'NarrativeFlow';
 
 export interface KnowledgeNode {
   id: string;
@@ -10,26 +13,33 @@ export interface KnowledgeNode {
   created_at: Date;
 }
 
-export interface VideoNodeProps {
+export interface SourceNodeProps {
   source_id: string;
   description: string | null;
   duration_seconds: number | null;
+  source_type: string;
 }
 
-export interface TranscriptNodeProps {
-  video_id: string;
+/** @deprecated Use SourceNodeProps */
+export type VideoNodeProps = SourceNodeProps;
+
+export interface ContentBodyNodeProps {
+  source_id: string;
   language: string;
   type: string;
   segment_count: number;
 }
+
+/** @deprecated Use ContentBodyNodeProps */
+export type TranscriptNodeProps = ContentBodyNodeProps;
 
 export interface SegmentNodeProps {
   start_ms: number;
   end_ms: number;
   sequence_index: number;
   speaker: string | null;
-  video_id: string;
-  video_title: string;
+  source_id: string;
+  source_title: string;
 }
 
 export interface TopicNodeProps {

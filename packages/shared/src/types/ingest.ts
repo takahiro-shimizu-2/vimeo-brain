@@ -1,8 +1,8 @@
-import type { IngestStatus } from './video.js';
+import type { IngestStatus } from './content-source.js';
 
 export interface IngestLog {
   id: string;
-  video_id: string;
+  source_id: string;       // was video_id
   content_hash: string;
   segment_count: number;
   status: IngestStatus;

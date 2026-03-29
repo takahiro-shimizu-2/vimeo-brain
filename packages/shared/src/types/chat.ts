@@ -1,9 +1,10 @@
 export type MessageRole = 'user' | 'assistant';
 
 export interface ChatSource {
-  video_id: string;
-  video_title: string;
-  timestamp_ms: number;
+  source_id: string;       // was video_id
+  source_title: string;    // was video_title
+  source_type: string;
+  timestamp_ms: number;    // chat/text: 0
   segment_text: string;
 }
 
