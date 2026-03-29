@@ -1,6 +1,6 @@
 import { Box, List, ListItemButton, ListItemIcon, ListItemText, Typography, Divider } from '@mui/material';
 import ChatIcon from '@mui/icons-material/Chat';
-import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
+import ListAltIcon from '@mui/icons-material/ListAlt';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
@@ -9,7 +9,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
   const navItems = [
     { path: '/chat', label: 'Chat', icon: <ChatIcon /> },
-    { path: '/videos', label: 'Videos', icon: <VideoLibraryIcon /> },
+    { path: '/sources', label: 'Sources', icon: <ListAltIcon /> },
   ];
 
   return (
