@@ -1,15 +1,19 @@
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, Button, ToggleButtonGroup, ToggleButton, Alert, Typography,
+  TextField, Button, ToggleButtonGroup, ToggleButton, Alert, Box, Typography,
 } from '@mui/material';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 import type { SourceType } from '../../api/sources.api';
+import { sourcesApi } from '../../api/sources.api';
 
 interface Props {
   open: boolean;
   onClose: () => void;
   onAdd: (sourceType: SourceType, sourceId: string) => Promise<void>;
 }
+
+const ACCEPTED_EXTENSIONS = '.txt,.md,.csv';
 
 const YOUTUBE_ID_RE = /^[A-Za-z0-9_-]{11}$/;
 const VIMEO_ID_RE = /^\d{1,20}$/;
@@ -72,8 +76,10 @@ function getPlaceholder(sourceType: SourceType): string {
 export function AddSourceDialog({ open, onClose, onAdd }: Props) {
   const [sourceType, setSourceType] = useState<SourceType>('youtube');
   const [sourceId, setSourceId] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const resolvedId = sourceType === 'youtube' ? extractYouTubeId(sourceId) : sourceId.trim();
   const validationError = sourceId.trim() ? validateSourceId(sourceType, resolvedId) : null;
@@ -81,7 +87,26 @@ export function AddSourceDialog({ open, onClose, onAdd }: Props) {
   const isTextType = sourceType === 'text';
 
   const handleSubmit = async () => {
-    if (isTextType || !sourceId.trim() || validationError) return;
+    if (isTextType) {
+      // Text upload flow
+      if (!selectedFile) return;
+      setLoading(true);
+      setError(null);
+      try {
+        await sourcesApi.upload(selectedFile);
+        setSelectedFile(null);
+        setError(null);
+        onClose();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Failed to upload file';
+        setError(msg);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    if (!sourceId.trim() || validationError) return;
     setLoading(true);
     setError(null);
     try {
@@ -100,8 +125,13 @@ export function AddSourceDialog({ open, onClose, onAdd }: Props) {
   const handleClose = () => {
     setError(null);
     setSourceId('');
+    setSelectedFile(null);
     onClose();
   };
+
+  const canSubmit = isTextType
+    ? !!selectedFile && !loading
+    : !loading && !!sourceId.trim() && !validationError;
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
@@ -111,7 +141,7 @@ export function AddSourceDialog({ open, onClose, onAdd }: Props) {
           value={sourceType}
           exclusive
           onChange={(_, v: SourceType | null) => {
-            if (v) { setSourceType(v); setSourceId(''); setError(null); }
+            if (v) { setSourceType(v); setSourceId(''); setSelectedFile(null); setError(null); }
           }}
           size="small"
           sx={{ mt: 1, mb: 2 }}
@@ -123,9 +153,33 @@ export function AddSourceDialog({ open, onClose, onAdd }: Props) {
         </ToggleButtonGroup>
 
         {isTextType ? (
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            Text file upload will be available in a future release.
-          </Typography>
+          <Box sx={{ mt: 1 }}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={ACCEPTED_EXTENSIONS}
+              style={{ display: 'none' }}
+              onChange={e => {
+                const file = e.target.files?.[0] ?? null;
+                setSelectedFile(file);
+                setError(null);
+              }}
+            />
+            <Button
+              variant="outlined"
+              startIcon={<UploadFileIcon />}
+              onClick={() => fileInputRef.current?.click()}
+              fullWidth
+              sx={{ py: 2 }}
+            >
+              {selectedFile ? selectedFile.name : 'Select File (.txt, .md, .csv)'}
+            </Button>
+            {selectedFile && (
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                {(selectedFile.size / 1024).toFixed(1)} KB
+              </Typography>
+            )}
+          </Box>
         ) : (
           <TextField
             autoFocus
@@ -148,9 +202,9 @@ export function AddSourceDialog({ open, onClose, onAdd }: Props) {
         <Button
           variant="contained"
           onClick={handleSubmit}
-          disabled={loading || isTextType || !sourceId.trim() || !!validationError}
+          disabled={!canSubmit}
         >
-          Add
+          {isTextType ? 'Upload' : 'Add'}
         </Button>
       </DialogActions>
     </Dialog>

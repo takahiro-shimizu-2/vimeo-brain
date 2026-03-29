@@ -75,6 +75,7 @@ export async function buildGraph(
         speaker: seg.speaker,
         source_id: sourceNode.id,
         source_title: sourceTitle,
+        source_type: sourceNodeType,
       },
       seg.content_hash
     );

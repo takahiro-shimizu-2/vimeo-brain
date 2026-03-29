@@ -34,6 +34,7 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       VIMEO_WEBHOOK_SECRET: ${VIMEO_WEBHOOK_SECRET:-}
       YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
+      CHATWORK_API_TOKEN: ${CHATWORK_API_TOKEN:-}
     depends_on:
       postgres:
         condition: service_healthy
